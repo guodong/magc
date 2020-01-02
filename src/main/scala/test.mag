@@ -1,0 +1,112 @@
+WhiteList = [1.0.0.1, 1.0.0.2]
+hostTable = {}
+if (pkt.hdr.ipv4.dst in WhiteList) {
+    pkt.path = sp(ingestion, hostTable[pkt.hdr.ipv4.dst])
+}
+
+g0 = in(WhiteList, pkt.hdr.ipv4.dst)
+if g0: v0 = valof(hostTable, pkt.hdr.ipv4.dst)
+if g0: pkt.path = sp(pkt.ingestion, v0)
+
+
+
+
+
+current_sw = s1
+context = get_context(pkt, inport)
+
+if (pkt.hdr.ipv4.dst in WhiteList) {
+    pkt.path = sp(ingestion, hostTable[pkt.hdr.ipv4.dst])
+}
+
+
+def localOnPkt(current_sw):
+
+    def inner(pkt, ingress):
+        src_vars = get_src_vars(current_sw, pkt, ingress)
+        global_pipe(src_vars, pkt)
+        egress = path_to_port(pkt.path, current_sw)
+
+    return inner
+
+if (ingestion in external_ingress_ports) {
+    if (pkt.hdr.ipv4.dst in WhiteList) {
+        pkt.path = sp(pkt.ingestion, hostTable[pkt.hdr.ipv4.dst])
+        // pkt.path = `INGESTION.*wp.*DST`
+    }
+
+    if in_path(pkt.path, current_sw) {
+        outport = portof(pkt.path, current_sw)
+    }
+}
+
+global_f = (pkt, ingestion, [local_f,...])
+
+#include <header.mag>
+#include <parser.mag>
+
+ipv4_to_swport: map<ipv4_t, swport_t> = {1.0.0.1: a, 1.0.0.2: f};
+whitelist: list<tuple<ipv4_t, port_t>> = [(1.0.0.1, 80), (1.0.0.2, 8080)]
+
+extern path_t my_path_compute(swport_t, swport_t);
+
+path_control l3_fwd(inout packet_t<headers_t> pkt) {
+  if ((pkt.hdr.ipv4.dst, pkt.hdr.tcp.dst) in whitelist) {
+      swport_t dst = ipv4_to_swport[pkt.hdr.ipv4.dst];
+      pkt.path = my_path_compute(pkt.ingestion_port, dst);
+  }
+}
+threads {
+  ingestion_port='external_ingress'=> program=(l3_fwd)
+}
+
+
+function ingestion_localize(pkt, port) {
+    FEG = explore()
+    igsts = []
+    for igst, path in FEG.paths:
+        if peerOf(port) in path:
+            igsts += igst
+
+    if igsts.length == 0:
+        return null
+    if igsts.length == 1:
+        return igsts[0]
+    else:
+
+        return CONFLICT
+}
+
+
+if pkt.tag.isValid() {
+    ingestion = tag_to_ingest[pkt.tag]
+} else {
+    ingestion = ingestion_localize(pkt, port)
+}
+
+ingestion = ingestion_localize(pkt, port)
+gp content...
+pkt.egress = path_localize(pkt.egress_path, port)
+
+conflict, position = check_downward_conflict(pkt.egress_path, port)
+if (conflict and position == port) {
+    tag = gen_tag()
+}
+if (tag != null and !pkt.tag.isValid()) {
+    pkt.tag = tag
+    pkt.tag.setValid()
+}
+if (tag == null and pkt.tag.isValid()) {
+    pkt.tag.setInvalid()
+}
+
+
+gp = (pkt, ingestion) => path
+
+
+function path_localize(path, port) {
+	return path[path.findIndex(peerOf(port)) + 1]
+}
+
+for port in network.ports:
+port.pp = localize(gp, port)
