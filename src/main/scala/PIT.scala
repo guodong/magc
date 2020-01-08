@@ -9,8 +9,10 @@ class PIT {
   var tipe = 0 // 0: cm, 1: ncm
   var inputs: ArrayBuffer[Variable] = ArrayBuffer()
   var outputs: ArrayBuffer[Variable] = ArrayBuffer()
-  var entries: ArrayBuffer[Map[Variable, Any]] = ArrayBuffer()
   var ents: Map[Map[Variable, Any], Map[Variable, Any]] = Map()
+
+
+  var entries: ArrayBuffer[Map[Variable, Any]] = ArrayBuffer()
 
   def dump(): Unit = {
     println((inputs ++ outputs).map(i => i.name).mkString(" | "))

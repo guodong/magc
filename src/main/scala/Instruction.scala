@@ -5,12 +5,12 @@ sealed trait Instruction {
   val gv: Variable
   var pit: PIT = new PIT
 
-  def toPIT: Unit
+  def toPIT(): Unit
 
 }
 
 case class ValofInst[KT, VT](gv: Variable, output: Variable, left: MapVariable[KT, VT], right: StringVariable) extends Instruction {
-  override def toPIT: Unit = {
+  override def toPIT(): Unit = {
     pit.tipe = 0
     pit.inputs += (gv, right)
     pit.outputs += output
@@ -25,7 +25,7 @@ case class ValofInst[KT, VT](gv: Variable, output: Variable, left: MapVariable[K
 }
 
 case class UdfInst(gv: Variable, output: Variable, name: String, inputs: ArrayBuffer[Variable]) extends Instruction {
-  override def toPIT: Unit = {
+  override def toPIT(): Unit = {
     pit.tipe = 1
     pit.inputs = inputs
     pit.outputs += output
@@ -35,7 +35,7 @@ case class UdfInst(gv: Variable, output: Variable, name: String, inputs: ArrayBu
 }
 
 case class InInst(gv: Variable, output: Variable, left: Variable, right: Variable) extends Instruction {
-  override def toPIT: Unit = {
+  override def toPIT(): Unit = {
     pit.inputs += right
     pit.outputs += output
     left match {
@@ -49,7 +49,14 @@ case class InInst(gv: Variable, output: Variable, left: Variable, right: Variabl
       case _ =>
     }
   }
-  override def toString: String = s"if $gv: ${output} = in(${left}, ${right})"
+
+  override def toString: String = {
+    if (gv == null) {
+      s"${output} = in(${left}, ${right})"
+    } else {
+      s"if $gv: ${output} = in(${left}, ${right})"
+    }
+  }
 }
 
 /*

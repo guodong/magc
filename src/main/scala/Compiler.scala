@@ -1,4 +1,6 @@
 
+import network.Topology
+
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
@@ -9,29 +11,41 @@ object Compiler extends App {
   external_ingress_ports.value += ("e1:1", "e2:1")
   val g0 = IntVariable("g0")
   val ingestion = StringVariable("ingestion")
-  ingestion.value = "e1:1"
+  ir.variables += ingestion
+  //  ingestion.value = "e1:1"
   val inst0 = InInst(null, g0, external_ingress_ports, ingestion)
   ir.addInstruction(inst0)
   val hostTable = MapVariable[String, String]("hostTable")
   hostTable.value += ("1.0.0.1" -> "e1:1", "1.0.0.2" -> "e2:1")
   var v1 = StringVariable("pkt.hdr.ipv4.dst")
   var v2 = IntVariable("v2")
-  var path = IntVariable("path" )
+  var path = IntVariable("path")
+  ir.variables += path
   val inst = ValofInst(g0, v2, hostTable, v1)
   val inst1 = UdfInst(g0, path, "sp", ArrayBuffer[Variable](ingestion, v2))
 
   ir.addInstruction(inst)
   ir.addInstruction(inst1)
-  ir.dump()
-  ir.toPIT()
-  ir.dumpPIT()
-  ir.explore()
-  ir.dumpJson()
-  ir.dumpPIT()
-  val a = BitSetBuilder.fromString("100") // 100101
-  println(a)
-  val b = BitSetBuilder.fromInt(21, 6) // 010101  -> 011001100110
-  println(b)
+  compile()
+
+
+  def compile(): Unit = {
+    ir.dump()
+    ir.toPIT()
+    ir.dumpPIT()
+    ir.explore()
+    ir.dumpJson()
+    ir.dumpPIT()
+    ir.localize()
+    //  val a = BitSetBuilder.fromString("100") // 100101
+    //  println(a)
+    //  val b = BitSetBuilder.fromInt(21, 6) // 010101  -> 011001100110
+    //  println(b)
+    //  val x = Codegen.gen()
+    //  println(x)
+    //  val x = Cheese.foo(1)(b => println(b))
+    //  println(x)
+  }
 }
 
 /*
@@ -73,7 +87,7 @@ object Compiler extends App {
 
   ir.dump()
 
-  val topo = Topology
+  val topo = network.Topology
 
 }
 */

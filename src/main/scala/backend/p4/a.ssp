@@ -1,0 +1,2 @@
+<% import Cheese._  %>
+${foo(123)}

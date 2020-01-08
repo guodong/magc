@@ -16,3 +16,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic",
   "io.circe" %% "circe-parser"
 ).map(_ % circeVersion)
+//addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.5.0")
+//lazy val root = (project in file(".")).enablePlugins(SbtTwirl)
+
+//enablePlugins(SbtTwirl)
