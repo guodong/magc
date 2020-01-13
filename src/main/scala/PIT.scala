@@ -1,4 +1,5 @@
 import scala.collection.mutable.ArrayBuffer
+//import scala.collection.mutable.Map
 
 trait VariableValue[T] {
   val variable: Variable
@@ -15,7 +16,7 @@ class PIT {
   var entries: ArrayBuffer[Map[Variable, Any]] = ArrayBuffer()
 
   def dump(): Unit = {
-    println((inputs ++ outputs).map(i => i.name).mkString(" | "))
+    println((inputs ++ outputs).map(_.name).mkString(" | "))
     ents.map(e => {
       print(inputs.map(i => e._1(i)).mkString(" | "))
       print(" | ")

@@ -1,0 +1,19 @@
+extern sp(swport_t, swport_t)
+
+map<string, macvrf_t> vn = {"evi1": {}}
+map<swport_t, string> portToEvi = {"s1:1": "evi1", "s2:1": "evi1"}
+
+@port_label("pe_ingress")
+path_control pc(in packet_t pkt, out path_t path) {
+    evi = portToEvi[pkt.ingestion]
+    vrf = vn[evi]
+
+    // mac learning
+    vrf[pkt.hdr.eth.src] = pkt.ingestion
+
+    if (vrf.contains(pkt.hdr.eth.dst)) {
+        path = sp(pkt.ingestion, vrf[pkt.hdr.eth.dst])
+    } else {
+        path = drop
+    }
+}

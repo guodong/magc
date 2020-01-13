@@ -1,20 +1,69 @@
-import scala.collection.mutable.ArrayBuffer
+
 
 sealed trait Variable {
-  def name: String
+  val name: String
+  val ty: Type
+  var isGlobal: Boolean = false
+
   override def toString: String = name
 }
 
-case class MapVariable[KT, VT](name: String) extends Variable {
-  var value: Map[KT, VT] = Map[KT, VT]()
+trait CompoundVariable extends Variable
+
+trait Literal extends Variable
+
+trait SimpleLiteral extends Literal
+
+case class StringLiteral(name: String, value: String) extends SimpleLiteral {
+  override val ty: Type = StringType
+
+  // NOTE: if add "" to string, the udf part need to trim it to get string value
+  // override def toString: String = s""""${value}""""
+  override def toString: String = value.toString
 }
 
-case class SetVariable(name: String) extends Variable {
-  var value: ArrayBuffer[String] = ArrayBuffer[String]()
+case class NumericLiteral(name: String, value: Int) extends SimpleLiteral {
+  override val ty: Type = BitType
+
+  override def toString: String = value.toString
 }
 
-case class StringVariable( var name: String) extends Variable {
-  var value = ""
+/**
+ * support simple literal currently, nested literal should be added in future
+ *
+ * @param name
+ * @param value
+ */
+case class ListLiteral(name: String, value: List[SimpleLiteral]) extends Literal {
+  override val ty: Type = ListType
+
+  override def toString: String = s"${this.getClass.getSimpleName}(${value.mkString(", ")})"
 }
 
-case class IntVariable( var name: String) extends Variable
+/**
+ * support simple literal currently, nested literal should be added in future
+ *
+ * @param name
+ * @param value
+ */
+case class MapLiteral(name: String, value: Map[SimpleLiteral, SimpleLiteral]) extends Literal {
+  override val ty: Type = MapType
+
+  override def toString: String = value.toString()
+}
+
+case class StringVariable(name: String) extends Variable {
+  override val ty: Type = StringType
+}
+
+case class BitVariable(name: String, width: Int) extends Variable {
+  override val ty: Type = BitType
+}
+
+case class MapVariable(name: String, kt: Type, vt: Type) extends CompoundVariable {
+  override val ty: Type = MapType
+}
+
+case class SetVariable(name: String, vt: Type) extends CompoundVariable {
+  override val ty: Type = SetType
+}

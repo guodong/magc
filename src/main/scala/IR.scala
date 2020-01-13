@@ -1,13 +1,11 @@
 import network.Topology
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
-import scalax.collection.GraphPredef._
 
-import scala.collection.mutable.ArrayBuffer
-import scala.util.control.Breaks._
+import scala.collection.mutable.{ArrayBuffer}
 
 class FEGNode(val instruction: Instruction) {
-  var state: Map[Variable, Any] = Map.empty
+  var state: Map[Variable, Any] = Map[Variable, Any]()
 }
 
 
@@ -25,66 +23,151 @@ object IR {
     variables.find(v => v.name == name)
   }
 
+  def addVariable(variable: Variable): Unit = {
+    variables += variable
+  }
+
   def dump() {
     instructions.foreach(i => {
       println(i)
     })
   }
 
-  def symbolExe(): Unit = {
-
-  }
-
   def explore(): Unit = {
     val node = new FEGNode(null)
-    exploreInst(instructions(0), node)
+    var valueMap: Map[Variable, Any] = Map.empty
+    exploreI(instructions(0), node)
   }
 
-  private def exploreInst(i: Instruction, node: FEGNode): Unit = {
+  private def exploreI(i: Instruction, node: FEGNode): Unit = {
     println(node.state)
-    if (i.pit.tipe == 1) { // ncm
-      i match {
-        case ui: UdfInst =>
-          var inputs = Map[Variable, Any]()
-          ui.inputs.foreach(input => inputs += (input -> node.state(input)))
-          val path =  Topology.shortestPath(node.state(ui.inputs(0)).toString, node.state(ui.inputs(1)).toString)
-          ui.pit.ents += (inputs -> Map(ui.output -> path))
-          var pfk = Map(getVariable("ingestion").get -> node.state(getVariable("ingestion").get))
-          for ((k, v) <- node.state) {
-            if (k.name.contains("pkt.hdr")) {
-              pfk += (k -> v)
-            }
-          }
-          pm += pfk -> path.get
-        case _ =>
-      }
+    //    var state1: scala.collection.mutable.Map[Variable, Any] = node.state.clone()
+    var state: Map[Variable, Any] = Map.empty
+    for ((k, v) <- node.state) {
+      state += (k -> v)
     }
-    for (e <- i.pit.entries) {
-      var conflicted = false
-      breakable {
-        for (item <- e) {
-          if (node.state.contains(item._1) && node.state(item._1) != item._2) {
-            conflicted = true
-            // TODO: remove state
-            break
-          }
-        }
-      }
-      if (!conflicted) {
+    i match {
+      case ai: AssignListInst =>
+        state += (ai.dst -> ai.inputs(0))
         val nnode = new FEGNode(i)
-        for (x <- node.state) {
-          nnode.state += (x._1 -> x._2)
-        }
-        nnode.state ++= e
-        feg += (node ~> nnode)
+        nnode.state = state
         if (instructions.indexOf(i) + 1 < instructions.length) {
-          exploreInst(instructions(instructions.indexOf(i) + 1), nnode)
+          exploreI(instructions(instructions.indexOf(i) + 1), nnode)
         }
-      }
+      case ami: AssignMapInst =>
+        state += (ami.dst -> ami.inputs(0))
+        val nnode = new FEGNode(i)
+        nnode.state = state
+        if (instructions.indexOf(i) + 1 < instructions.length) {
+          exploreI(instructions(instructions.indexOf(i) + 1), nnode)
+        }
+      case ini: InInst =>
+        ini.target match {
+          case mv: MapVariable =>
+            node.state(mv) match {
+              case ml: MapLiteral =>
+                for ((k, v) <- ml.value) {
+                  ini.pit.ents += (Map(ini.inputs(0) -> k) -> Map(ini.output -> v))
+                  val nnode = new FEGNode(i)
+                  nnode.state = state
+                  if (instructions.indexOf(i) + 1 < instructions.length) {
+                    exploreI(instructions(instructions.indexOf(i) + 1), nnode)
+                  }
+                }
+            }
+          case sv: SetVariable =>
+            node.state(sv) match {
+              case sl: ListLiteral =>
+                sl.value.foreach(v => {
+                  ini.pit.ents += (Map(ini.inputs(0) -> v) -> Map(ini.outputs(0) -> "1"))
+                  state += (ini.inputs(0) -> v)
+                  val nnode = new FEGNode(i)
+                  nnode.state = state
+                  if (instructions.indexOf(i) + 1 < instructions.length) {
+                    exploreI(instructions(instructions.indexOf(i) + 1), nnode)
+                  }
+                })
+            }
+          case _ =>
+        }
+      case vi: ValofInst =>
+        vi.target match {
+          case mv: MapVariable =>
+            node.state(mv) match {
+              case ml: MapLiteral =>
+                for ((k, v) <- ml.value) {
+                  vi.pit.ents += (Map(vi.inputs(0) -> k) -> Map(vi.output -> v))
+                  state += (vi.inputs(0) -> k, vi.output -> v)
+                  val nnode = new FEGNode(i)
+                  nnode.state = state
+                  if (instructions.indexOf(i) + 1 < instructions.length) {
+                    exploreI(instructions(instructions.indexOf(i) + 1), nnode)
+                  }
+                }
+            }
+        }
+      case ui: UdfInst =>
+        var inputs = Map[Variable, Any]()
+        ui.inputs.foreach(input => inputs += (input -> node.state(input)))
+        val path = Topology.shortestPath(node.state(ui.inputs(0)).toString, node.state(ui.inputs(1)).toString)
+        ui.pit.ents += (inputs -> Map(ui.outputs(0) -> path))
+        var pfk = Map(getVariable("ingestion").get -> node.state(getVariable("ingestion").get))
+        for ((k, v) <- node.state) {
+          if (k.name.contains("pkt.hdr")) {
+            pfk += (k -> v)
+          }
+        }
+        pm += pfk -> path.get
+      case _ =>
     }
+
   }
 
-  def dumpJson(): Unit = {
+  //  private def exploreInst(i: Instruction, node: FEGNode): Unit = {
+  //    println(node.state)
+  //    if (i.pit.tipe == 1) { // ncm
+  //      i match {
+  //        case ui: UdfInst =>
+  //          var inputs = Map[Variable, Any]()
+  //          ui.inputs.foreach(input => inputs += (input -> node.state(input)))
+  //          val path = Topology.shortestPath(node.state(ui.inputs(0)).toString, node.state(ui.inputs(1)).toString)
+  //          ui.pit.ents += (inputs -> Map(ui.outputs(0) -> path))
+  //          var pfk = Map(getVariable("ingestion").get -> node.state(getVariable("ingestion").get))
+  //          for ((k, v) <- node.state) {
+  //            if (k.name.contains("pkt.hdr")) {
+  //              pfk += (k -> v)
+  //            }
+  //          }
+  //          pm += pfk -> path.get
+  //        case _ =>
+  //      }
+  //    }
+  //    for (e <- i.pit.entries) {
+  //      var conflicted = false
+  //      breakable {
+  //        for (item <- e) {
+  //          if (node.state.contains(item._1) && node.state(item._1) != item._2) {
+  //            conflicted = true
+  //            // TODO: remove state
+  //            break
+  //          }
+  //        }
+  //      }
+  //      if (!conflicted) {
+  //        val nnode = new FEGNode(i)
+  //        for (x <- node.state) {
+  //          nnode.state += (x._1 -> x._2)
+  //        }
+  //        nnode.state ++= e
+  //        feg += (node ~> nnode)
+  //        if (instructions.indexOf(i) + 1 < instructions.length) {
+  //          exploreInst(instructions(instructions.indexOf(i) + 1), nnode)
+  //        }
+  //      }
+  //    }
+  //  }
+
+  def dumpFEG(): Unit = {
     println(feg)
   }
 
@@ -105,7 +188,7 @@ object IR {
           o(x.get) match {
             case y: Some[Topology.g.Path] => {
               val path = y.get
-//              pfs += y.get -> Map[Variable, Any](feg.nodes)
+              //              pfs += y.get -> Map[Variable, Any](feg.nodes)
             }
           }
         }

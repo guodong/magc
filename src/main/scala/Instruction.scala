@@ -1,60 +1,102 @@
 
-import scala.collection.mutable.ArrayBuffer
 
 sealed trait Instruction {
   val gv: Variable
+  val inputs: List[Variable]
+  val outputs: List[Variable]
   var pit: PIT = new PIT
 
   def toPIT(): Unit
 
 }
 
-case class ValofInst[KT, VT](gv: Variable, output: Variable, left: MapVariable[KT, VT], right: StringVariable) extends Instruction {
+case class ValofInst(gv: Variable, output: Variable, target: CompoundVariable, key: Variable) extends Instruction {
   override def toPIT(): Unit = {
-    pit.tipe = 0
-    pit.inputs += (gv, right)
+    pit.inputs += key
     pit.outputs += output
-    for (x <- left.value) {
-      val mp: Map[Variable, Any] = Map[Variable, Any](gv -> "1", right -> x._1, output -> x._2)
-      pit.entries.addOne(mp)
-      pit.ents += Map(gv -> "1", right -> x._1) -> Map(output -> x._2)
+  }
+
+  override val inputs: List[Variable] = List(key)
+  override val outputs: List[Variable] = List(output)
+  override def toString: String = {
+    if (gv == null) {
+      s"${output} = valof(${target}, ${key})"
+    } else {
+      s"if $gv: ${output} = valof(${target}, ${key})"
     }
   }
 
-  override def toString: String = s"if ${gv}: ${output} = varof(${left}, ${right})"
 }
 
-case class UdfInst(gv: Variable, output: Variable, name: String, inputs: ArrayBuffer[Variable]) extends Instruction {
+//case class ValofInst1[KT, VT](gv: Variable, output: Variable, left: MapVariable[KT, VT], right: StringVariable) extends Instruction {
+//  override def toPIT(): Unit = {
+//    pit.tipe = 0
+//    pit.inputs += (gv, right)
+//    pit.outputs += output
+//    for (x <- left.value) {
+//      val mp: Map[Variable, Any] = Map[Variable, Any](gv -> "1", right -> x._1, output -> x._2)
+//      pit.entries.addOne(mp)
+//      pit.ents += Map(gv -> "1", right -> x._1) -> Map(output -> x._2)
+//    }
+//  }
+//
+//  override def toString: String = s"if ${gv}: ${output} = varof(${left}, ${right})"
+//}
+
+case class UdfInst(gv: Variable, outputs: List[Variable], name: String, inputs: List[Variable]) extends Instruction {
   override def toPIT(): Unit = {
     pit.tipe = 1
-    pit.inputs = inputs
-    pit.outputs += output
+    pit.inputs = collection.mutable.ArrayBuffer(inputs: _*)
+    pit.outputs = collection.mutable.ArrayBuffer(outputs: _*)
   }
 
-  override def toString: String = s"if $gv: ${output} = ${name}(${inputs.map(i => i.toString()).mkString(", ")})"
+  override def toString: String = s"if $gv: ${outputs.mkString(", ")} = ${name}(${inputs.map(i => i.toString()).mkString(", ")})"
 }
 
-case class InInst(gv: Variable, output: Variable, left: Variable, right: Variable) extends Instruction {
+case class InInst(gv: Variable, output: Variable, target: CompoundVariable, key: Variable) extends Instruction {
   override def toPIT(): Unit = {
-    pit.inputs += right
+    pit.inputs += key
     pit.outputs += output
-    left match {
-      case v: SetVariable => {
-        for (x <- v.value) {
-          val mp: Map[Variable, String] = Map[Variable, String](right -> x, output -> "1")
-          pit.entries += mp
-          pit.ents += (Map(gv -> "1", right -> x) -> Map(output -> "1"))
-        }
-      }
-      case _ =>
-    }
   }
 
   override def toString: String = {
     if (gv == null) {
-      s"${output} = in(${left}, ${right})"
+      s"${output} = in(${target}, ${key})"
     } else {
-      s"if $gv: ${output} = in(${left}, ${right})"
+      s"if $gv: ${output} = in(${target}, ${key})"
+    }
+  }
+
+  override val inputs: List[Variable] = List(key)
+  override val outputs: List[Variable] = List(output)
+}
+
+case class AssignListInst(gv: Variable, dst: Variable)(src: ListLiteral) extends Instruction {
+  override def toPIT(): Unit = {}
+
+  override val inputs: List[Variable] = List(src)
+  override val outputs: List[Variable] = List(dst)
+
+  override def toString: String = {
+    if (gv == null) {
+      s"${dst} = assign(${src})"
+    } else {
+      s"if $gv: ${dst} = assign(${src})"
+    }
+  }
+}
+
+case class AssignMapInst(gv: Variable, dst: Variable)(entries: Variable) extends Instruction {
+  override def toPIT(): Unit = {}
+
+  override val inputs: List[Variable] = List(entries)
+  override val outputs: List[Variable] = List(dst)
+
+  override def toString: String = {
+    if (gv == null) {
+      s"${dst} = assign(${entries})"
+    } else {
+      s"if $gv: ${dst} = assign(${entries})"
     }
   }
 }
