@@ -1,19 +1,22 @@
-extern sp(swport_t, swport_t)
+extern shortestPath(Port, Port)
 
-map<string, macvrf_t> vn = {"evi1": {}}
-map<swport_t, string> portToEvi = {"s1:1": "evi1", "s2:1": "evi1"}
+class Tenant(id: Int, PEPorts: Set[Port]) {
+    macTable: Map[Mac, Port]
+}
 
-@port_label("pe_ingress")
+tenants: Set<Tenant> = [Tenant(1, Set("s1:1", "s2:1"))]
+
 path_control pc(in packet_t pkt, out path_t path) {
-    evi = portToEvi[pkt.ingestion]
-    vrf = vn[evi]
+    tenant: Tenant = tenants.find(t => t.PEPorts.contains(pkt.ingestion))
+    tenant.macTable(pkt.hdr.eth.src) = pkt.ingestion
 
-    // mac learning
-    vrf[pkt.hdr.eth.src] = pkt.ingestion
-
-    if (vrf.contains(pkt.hdr.eth.dst)) {
-        path = sp(pkt.ingestion, vrf[pkt.hdr.eth.dst])
+    if (tenant.macTable.contains(pkt.hdr.eth.dst)) {
+        path = shortestPath(pkt.ingestion, tenant.macTable(pkt.hdr.eth.dst))
     } else {
         path = drop
     }
+}
+
+threads {
+    ingestion="pe_ingress" => program=pc
 }

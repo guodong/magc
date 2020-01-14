@@ -3,6 +3,11 @@ package frontend
 import scala.util.parsing.input.Positional
 
 sealed trait MagellanAST extends Positional
+case class ClassDef(name: String) extends MagellanAST
+case class VarDef(name: String, varType: VarType) extends MagellanAST
+case class VarType(name: String, genericTypes: Seq[VarType]) extends MagellanAST
+case class SimpleType(name: String) extends MagellanAST
+
 case class AndThen(step1: MagellanAST, step2: MagellanAST) extends MagellanAST
 case class ReadInput(inputs: Seq[String]) extends MagellanAST
 case class CallService(serviceName: String) extends MagellanAST

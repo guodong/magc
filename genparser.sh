@@ -1,0 +1,1 @@
+antlr Magellan.g4 -visitor -no-listener -o ./src/main/scala/frontend/parser/

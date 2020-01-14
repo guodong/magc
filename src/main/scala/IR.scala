@@ -14,6 +14,12 @@ object IR {
   val instructions: ArrayBuffer[Instruction] = new ArrayBuffer[Instruction]()
   var feg: Graph[FEGNode, DiEdge] = Graph()
   var pm: Map[Map[Variable, Any], Topology.g.Path] = Map.empty
+  var name_idx = 0
+
+  def genName(): String = {
+    name_idx += 1
+    "_v" + name_idx.toString
+  }
 
   def addInstruction(inst: Instruction) {
     instructions.addOne(inst)
