@@ -49,7 +49,7 @@ null
 null
 null
 Id
-StringLiteral
+frontend.StringLiteral
 WS
 COMMENT
 LINE_COMMENT

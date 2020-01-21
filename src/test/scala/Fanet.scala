@@ -1,4 +1,5 @@
 import Compiler.compile
+import frontend.{AssignListInst, AssignMapInst, BitVariable, IR, InInst, ListLiteral, MapLiteral, MapVariable, SetVariable, StringLiteral, StringType, StringVariable, UdfInst, ValofInst}
 import network.Topology
 import org.scalatest.FunSuite
 
@@ -14,7 +15,7 @@ class Fanet extends FunSuite {
     val ll = ListLiteral(ir.genName(), List(l1, l2))
     val listAssInst = AssignListInst(null, external_ingress_ports)(ll)
     ir.addInstruction(listAssInst)
-    //  external_ingress_ports.value += (StringVariable("e1:1", "e1:1"), StringVariable("e2:1", "e2:1"))
+    //  external_ingress_ports.value += (frontend.StringVariable("e1:1", "e1:1"), frontend.StringVariable("e2:1", "e2:1"))
     val hostTable = MapVariable("hostTable", StringType, StringType)
     val l3 = StringLiteral(ir.genName(), "1.0.0.1")
     val l4 = StringLiteral(ir.genName(), "1.0.0.2")

@@ -1,3 +1,4 @@
+import frontend.Variable
 import network.Topology
 
 class PathFingerprint {

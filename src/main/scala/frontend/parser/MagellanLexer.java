@@ -35,7 +35,7 @@ public class MagellanLexer extends Lexer {
 		return new String[] {
 			"T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", "T__7", "T__8", 
 			"T__9", "T__10", "T__11", "T__12", "T__13", "T__14", "T__15", "T__16", 
-			"T__17", "T__18", "T__19", "Id", "WhiteSpace", "StringLiteral", "StringElement", 
+			"T__17", "T__18", "T__19", "Id", "WhiteSpace", "frontend.StringLiteral", "StringElement",
 			"WS", "COMMENT", "LINE_COMMENT"
 		};
 	}
@@ -52,7 +52,7 @@ public class MagellanLexer extends Lexer {
 	private static String[] makeSymbolicNames() {
 		return new String[] {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, "Id", "StringLiteral", 
+			null, null, null, null, null, null, null, null, null, "Id", "frontend.StringLiteral",
 			"WS", "COMMENT", "LINE_COMMENT"
 		};
 	}

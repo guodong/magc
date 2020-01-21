@@ -1,0 +1,19 @@
+
+tenantIdToMacTable: Map[Int, Map[Mac, Port]] = (1 -> (00:00:00:00:01:01 -> "s1:1", 00:00:00:00:01:02 -> "s2:1"), 2 -> (00:00:00:00:02:01 -> "s1:2", 00:00:00:00:02:02 -> "s2:2"))
+portToTenantId: Map[Port, Int] = ("s1:1" -> 1, "s2:1" -> 1, "s1:2" -> 2, "s2:2" -> 2)
+
+path_control pc(in pkt: Packet, out path: Path) {
+    tenantId: Int = portToTenantId(pkt.ingestion_port)
+    // static mac addr, disable learning
+    // tenantIdToMacTable(tenantId) += (pkt.hdr.eth.src -> pkt.ingestion_port)
+
+    if (tenantIdToMacTable(tenantId).contains(pkt.hdr.eth.dst)) {
+        path = shortestPath(pkt.ingestion_port, tenantIdToMacTable(tenantId)(pkt.hdr.eth.dst))
+    } else {
+        path = drop
+    }
+}
+
+threads {
+    ingestion="pe_ingress" => program=pc
+}

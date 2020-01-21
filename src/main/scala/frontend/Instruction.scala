@@ -1,4 +1,4 @@
-
+package frontend
 
 sealed trait Instruction {
   val gv: Variable
@@ -7,7 +7,6 @@ sealed trait Instruction {
   var pit: PIT = new PIT
 
   def toPIT(): Unit
-
 }
 
 case class ValofInst(gv: Variable, output: Variable, target: CompoundVariable, key: Variable) extends Instruction {
@@ -25,16 +24,15 @@ case class ValofInst(gv: Variable, output: Variable, target: CompoundVariable, k
       s"if $gv: ${output} = valof(${target}, ${key})"
     }
   }
-
 }
 
-//case class ValofInst1[KT, VT](gv: Variable, output: Variable, left: MapVariable[KT, VT], right: StringVariable) extends Instruction {
+//case class ValofInst1[KT, VT](gv: frontend.Variable, output: frontend.Variable, left: frontend.MapVariable[KT, VT], right: frontend.StringVariable) extends frontend.Instruction {
 //  override def toPIT(): Unit = {
 //    pit.tipe = 0
 //    pit.inputs += (gv, right)
 //    pit.outputs += output
 //    for (x <- left.value) {
-//      val mp: Map[Variable, Any] = Map[Variable, Any](gv -> "1", right -> x._1, output -> x._2)
+//      val mp: Map[frontend.Variable, Any] = Map[frontend.Variable, Any](gv -> "1", right -> x._1, output -> x._2)
 //      pit.entries.addOne(mp)
 //      pit.ents += Map(gv -> "1", right -> x._1) -> Map(output -> x._2)
 //    }
@@ -86,7 +84,7 @@ case class AssignListInst(gv: Variable, dst: Variable)(src: ListLiteral) extends
   }
 }
 
-case class AssignMapInst(gv: Variable, dst: Variable)(entries: Variable) extends Instruction {
+case class AssignMapInst(gv: Variable, dst: Variable)(entries: MapLiteral) extends Instruction {
   override def toPIT(): Unit = {}
 
   override val inputs: List[Variable] = List(entries)
@@ -100,6 +98,8 @@ case class AssignMapInst(gv: Variable, dst: Variable)(entries: Variable) extends
     }
   }
 }
+
+
 
 /*
 object Mapping extends Enumeration {
@@ -125,7 +125,7 @@ class Instruction1(var gv: BaseVariable) {
   var outputs: ArrayBuffer[BaseVariable] = new ArrayBuffer[BaseVariable]()
   var mapping: Mapping = Mapping.PLUS
   var udf: String = ""
-  val pit: PIT = new PIT
+  val pit: frontend.PIT = new frontend.PIT
 
   def toPIT(): Unit = {
     for (input <- inputs) {
@@ -136,7 +136,7 @@ class Instruction1(var gv: BaseVariable) {
     }
     if (mapping == VALOF) {
       inputs.head match {
-        case MapVariable(name) => {
+        case frontend.MapVariable(name) => {
           println(name)
         }
       }

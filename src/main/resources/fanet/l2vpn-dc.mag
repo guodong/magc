@@ -1,0 +1,32 @@
+DCMACs: Set[Mac] = (01:00:00:00:00:01, 01:00:00:00:00:02)
+tenantDCACL: Map[Int, Bool] = (1 -> True, 2 -> False)
+tenantIdToMacTable: Map[Int, Map[Mac, Port]] = (
+    1 -> (00:00:00:00:01:01 -> "PE1:1", 00:00:00:00:01:02 -> "PE2:1"),
+    2 -> (00:00:00:00:02:01 -> "PE1:2", 00:00:00:00:02:02 -> "PE2:2")
+)
+portToTenantId: Map[Port, Int] = (
+    "PE1:1" -> 1, "PE2:1" -> 1,
+    "PE1:2" -> 2, "PE2:2" -> 2
+)
+path_control pc(in pkt: Packet, out path: Path) {
+   tenantId = portToTenantId(pkt.ingestion_port)
+   macTable = tenantIdToMacTable(tenantId)
+   if (DCMAC.contains(pkt.hdr.eth.dst) and tenantDCACL(tenantId) == True) {
+       dst = DC
+   } else if (macTable.contains(pkt.hdr.eth.dst)) {
+       dst = macTable(pkt.hdr.eth.dst)
+   } else {
+       dst = None
+   }
+   if (dst != None) {
+       p_path = shortestPath(pkt.ingestion_port, dst)
+       b_path = frr(p_path)
+       path = p_path >> b_path
+   } else {
+       path = drop
+   }
+}
+threads {
+   ingestion="pe_external_ingress" => program=pc
+}
+

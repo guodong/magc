@@ -1,8 +1,10 @@
+package frontend
+
 import network.Topology
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 
-import scala.collection.mutable.{ArrayBuffer}
+import scala.collection.mutable.ArrayBuffer
 
 class FEGNode(val instruction: Instruction) {
   var state: Map[Variable, Any] = Map[Variable, Any]()
@@ -47,7 +49,7 @@ object IR {
 
   private def exploreI(i: Instruction, node: FEGNode): Unit = {
     println(node.state)
-    //    var state1: scala.collection.mutable.Map[Variable, Any] = node.state.clone()
+    //    var state1: scala.collection.mutable.Map[frontend.Variable, Any] = node.state.clone()
     var state: Map[Variable, Any] = Map.empty
     for ((k, v) <- node.state) {
       state += (k -> v)
@@ -129,12 +131,12 @@ object IR {
 
   }
 
-  //  private def exploreInst(i: Instruction, node: FEGNode): Unit = {
+  //  private def exploreInst(i: frontend.Instruction, node: frontend.FEGNode): Unit = {
   //    println(node.state)
   //    if (i.pit.tipe == 1) { // ncm
   //      i match {
-  //        case ui: UdfInst =>
-  //          var inputs = Map[Variable, Any]()
+  //        case ui: frontend.UdfInst =>
+  //          var inputs = Map[frontend.Variable, Any]()
   //          ui.inputs.foreach(input => inputs += (input -> node.state(input)))
   //          val path = Topology.shortestPath(node.state(ui.inputs(0)).toString, node.state(ui.inputs(1)).toString)
   //          ui.pit.ents += (inputs -> Map(ui.outputs(0) -> path))
@@ -160,7 +162,7 @@ object IR {
   //        }
   //      }
   //      if (!conflicted) {
-  //        val nnode = new FEGNode(i)
+  //        val nnode = new frontend.FEGNode(i)
   //        for (x <- node.state) {
   //          nnode.state += (x._1 -> x._2)
   //        }
@@ -194,7 +196,7 @@ object IR {
           o(x.get) match {
             case y: Some[Topology.g.Path] => {
               val path = y.get
-              //              pfs += y.get -> Map[Variable, Any](feg.nodes)
+              //              pfs += y.get -> Map[frontend.Variable, Any](feg.nodes)
             }
           }
         }

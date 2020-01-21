@@ -1,6 +1,7 @@
+package frontend
 
 
-sealed trait Variable {
+trait Variable {
   val name: String
   val ty: Type
   var isGlobal: Boolean = false
@@ -23,7 +24,7 @@ case class StringLiteral(name: String, value: String) extends SimpleLiteral {
 }
 
 case class NumericLiteral(name: String, value: Int) extends SimpleLiteral {
-  override val ty: Type = BitType
+  override val ty: Type = BitwiseType
 
   override def toString: String = value.toString
 }
@@ -57,7 +58,7 @@ case class StringVariable(name: String) extends Variable {
 }
 
 case class BitVariable(name: String, width: Int) extends Variable {
-  override val ty: Type = BitType
+  override val ty: Type = BitwiseType
 }
 
 case class MapVariable(name: String, kt: Type, vt: Type) extends CompoundVariable {
@@ -67,3 +68,7 @@ case class MapVariable(name: String, kt: Type, vt: Type) extends CompoundVariabl
 case class SetVariable(name: String, vt: Type) extends CompoundVariable {
   override val ty: Type = SetType
 }
+
+//case class ClassVariable(name: String, attrs: Map[String, Variable]) extends CompoundVariable {
+//  override val ty: Type = ClassType
+//}

@@ -48,7 +48,7 @@ public class MagellanParser extends Parser {
 	private static String[] makeSymbolicNames() {
 		return new String[] {
 			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, "Id", "StringLiteral", 
+			null, null, null, null, null, null, null, null, null, "Id", "frontend.StringLiteral",
 			"WS", "COMMENT", "LINE_COMMENT"
 		};
 	}

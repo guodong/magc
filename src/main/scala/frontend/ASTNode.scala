@@ -1,0 +1,5 @@
+package frontend
+
+trait ASTNode {
+
+}

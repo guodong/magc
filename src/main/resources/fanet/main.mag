@@ -4,14 +4,14 @@ class Tenant(id: Int, PEPorts: Set[Port]) {
     macTable: Map[Mac, Port]
 }
 
-tenants: Set<Tenant> = [Tenant(1, Set("s1:1", "s2:1"))]
+tenants: Set[Tenant] = [Tenant(1, Set("s1:1", "s2:1"))]
 
-path_control pc(in packet_t pkt, out path_t path) {
-    tenant: Tenant = tenants.find(t => t.PEPorts.contains(pkt.ingestion))
-    tenant.macTable(pkt.hdr.eth.src) = pkt.ingestion
+path_control pc(in pkt: Packet, out path: Path) {
+    tenant: Tenant = tenants.find(t => t.PEPorts.contains(pkt.ingestion_port))
+    tenant.macTable(pkt.hdr.eth.src) = pkt.ingestion_port
 
     if (tenant.macTable.contains(pkt.hdr.eth.dst)) {
-        path = shortestPath(pkt.ingestion, tenant.macTable(pkt.hdr.eth.dst))
+        path = shortestPath(pkt.ingestion_port, tenant.macTable(pkt.hdr.eth.dst))
     } else {
         path = drop
     }

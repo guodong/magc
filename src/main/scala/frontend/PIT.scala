@@ -1,3 +1,5 @@
+package frontend
+
 import scala.collection.mutable.ArrayBuffer
 //import scala.collection.mutable.Map
 
@@ -27,7 +29,7 @@ class PIT {
 }
 
 /**
- * PIT entry value type
+ * frontend.PIT entry value type
  */
 class PITV {
 

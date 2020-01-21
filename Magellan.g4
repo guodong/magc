@@ -7,7 +7,7 @@ grammar Magellan;
 }
 
 program
-   : (classDef | pathCtlDef | threadDef)*
+   : (classDef | pathCtlDef | threadDef | stmt)*
    ;
 
 classDef
@@ -59,6 +59,15 @@ expr
    : attr
    | attr '(' anonymousFunc ')'
    | attr '(' expr (',' expr)* ')'
+   | mapExpr
+   ;
+
+mapExpr
+   : '(' mapItem (',' mapItem)* ')'
+   ;
+
+mapItem
+   : (IntegerLiteral | StringLiteral) '->' (IntegerLiteral | StringLiteral | '_')
    ;
 
 attr
@@ -95,8 +104,20 @@ StringLiteral
    : '"' StringElement* '"'
    ;
 
+IntegerLiteral
+   : (DecimalNumeral)
+   ;
+
 fragment StringElement
    : '\u0020' | '\u0021' | '\u0023' .. '\u007F'
+   ;
+
+fragment DecimalNumeral
+   : '0' | '1' .. '9' Digit*
+   ;
+
+fragment Digit
+   : '0' | '1' .. '9'
    ;
 
 WS
