@@ -1,0 +1,61 @@
+@template(host_table, Table(Ipv4Addr, Device))
+def intra_dc_pol(pkt):
+  if pkt.ipv4.dst in host_table:
+    return ecmp(here, host_table[pkt.ipv4.dst])
+  else:
+    return None
+
+@template(pod_table, Table(Ipv4Addr, Pod))
+@template(host_table, Table(Pod, Table(Ipv4Addr, Device)))
+@template(des, Set(Device))
+def inter_dc_pol(pkt):
+  if pkt.ipv4.dst lpmin pod_table:
+    dst_pod = pod_table.lpm(pkt.ipv4.dst)
+    if pkt.ipv4.dst in host_table[dst_pod]
+      dst = host_table[pod][pkt.ipv4.dst]
+      wp = des[hash5tuple(pkt) % des.length]
+      return sssp(here, wp) + sssp(wp, dst)
+  return None
+
+@template(pod_table, Table(Ipv4Addr, Pod))
+@template(host_table, Table(Pod, Table(Ipv4Addr, Device)))
+@template(de_table, Table(Pod, Device))
+def edge_to_dc_pol(pkt):
+  if pkt.ipv4.dst lpmin pod_table:
+    pod = pod_table.lpm(pkt.ipv4.dst)
+    if pkt.ipv4.dst in host_table[dst_pod]
+      dst = host_table[pod][pkt.ipv4.dst]
+      wp = de_table[pod]
+      return sssp(here, wp) + ecmp(wp, dst)
+  return None
+
+@template(edge_table, Table(Ipv4Addr, Edge))
+@template(host_table, Table(Edge, Table(Ipv4Addr, Device)))
+@template(ee_table, Table(Edge, Device))
+def edge_to_edge_pol(pkt):
+  if pkt.ipv4.dst in edge_table:
+    edge = edge_table.exact(pkt.ipv4.dst)
+    if pkt.ipv4.dst in host_table[dst_edge]
+      dst = host_table[edge][pkt.ipv4.dst]
+      wp = ee_table[edge]
+      return sssp(here, wp) + sssp(wp, dst)
+  return None
+
+def main():
+  pod_table = load_config('pod_table')
+  host_table = load_config('host_table')
+  de_table = load_config('de_table')
+  ee_table = load_config('ee_table')
+  des = load_config('des')
+  for _, pod in pod_table:
+    pol1i = new(intra_pod_pol, host_table[pod])
+    pol2i = new(inter_pod_pol, pod_table.filter(_, v => v != pod), host_table.filter(k, _ => k != pod), des)
+    pol = pol1i >> pol2i
+    vitruvius.new_thread(pod.host_ports, pol)
+  for _, edge in edge_table:
+    pol3i = new(edge_to_dc_pol, edge_table, host_table[edge], de_table)
+    pol4i = new(edge_to_edge_pol, edge_table, host_table[edge], ee_table)
+    pol = pol3i >> pol4i
+    vitruvius.new_thread(edge.eg_to_dc_ports, pol3i) // all edge can access dc
+    vitruvius.new_thread(edge.eg_to_eg_ports, pol) // eg0.asw2, eg1.asw0/1 can access each other
+  vitruvius.compile()

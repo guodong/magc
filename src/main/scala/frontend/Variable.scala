@@ -23,6 +23,7 @@ case class StringLiteral(name: String, value: String) extends SimpleLiteral {
   override def toString: String = value.toString
 }
 
+// TODO: float numeric, xe{n} numeric, 0x numeric...
 case class NumericLiteral(name: String, value: Int) extends SimpleLiteral {
   override val ty: Type = BitwiseType
 

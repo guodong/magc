@@ -1,5 +1,5 @@
 import Compiler.compile
-import frontend.{AssignListInst, AssignMapInst, BitVariable, IR, InInst, ListLiteral, MapLiteral, MapVariable, SetVariable, StringLiteral, StringType, StringVariable, UdfInst, ValofInst}
+import frontend._
 import network.Topology
 import org.scalatest.FunSuite
 
@@ -7,6 +7,7 @@ import scala.io.Source
 
 class Fanet extends FunSuite {
   test("basic test") {
+    val s1 = System.currentTimeMillis()
     Topology.fromJson(Source.fromResource("topo.json").mkString)
     val ir = IR
     val external_ingress_ports = SetVariable("ei", StringType)
@@ -39,6 +40,14 @@ class Fanet extends FunSuite {
     ir.addInstruction(inst)
     ir.addInstruction(inst1)
     compile()
+    val runtime = Runtime.getRuntime
+    val mb = 1024*1024
+    println("** Used Memory:  " + (runtime.totalMemory - runtime.freeMemory) / mb)
+    println("** Free Memory:  " + runtime.freeMemory / mb)
+    println("** Total Memory: " + runtime.totalMemory / mb)
+    println("** Max Memory:   " + runtime.maxMemory / mb)
+    val s2 = System.currentTimeMillis()
+    println(s2-s1)
   }
 }
 
